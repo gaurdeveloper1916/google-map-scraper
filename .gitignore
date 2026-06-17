@@ -1,0 +1,56 @@
+# Python virtual environment
+venv/
+env/
+ENV/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# macOS files
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# CSV / output files
+*.csv
+*.xlsx
+*.json
+
+# Playwright
+playwright-report/
+test-results/
+.browser/
+
+# Build files
+dist/
+build/
+
+# Cache
+.cache/
+
+# SQLite DB
+*.db
+
+# Node modules (if React frontend exists)
+node_modules/
+
+# AWS
+.aws/
+
+# Coverage
+.coverage
+htmlcov/
+
+# Temporary files
+tmp/
+temp/
