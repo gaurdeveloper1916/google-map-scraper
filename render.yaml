@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: google-maps-scraper
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: FIREBASE_CREDENTIALS_JSON
+        sync: false   # You will paste the value manually in the Render dashboard
+    healthCheckPath: /docs

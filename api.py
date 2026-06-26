@@ -1,3 +1,4 @@
+import json
 import logging
 import math
 import os
@@ -20,10 +21,21 @@ from scraper import scrape_places
 
 
 # FIREBASE INIT
+#
+# Credentials are loaded from one of two places (checked in order):
+#   1. FIREBASE_CREDENTIALS_JSON  — env var containing the full JSON string
+#      (used in production / Render deployment).
+#   2. firebase_credentials.json  — local file (used during local development).
 
-_CRED_PATH = os.path.join(os.path.dirname(__file__), "firebase_credentials.json")
+_CRED_ENV = os.environ.get("FIREBASE_CREDENTIALS_JSON")
 
-cred = credentials.Certificate(_CRED_PATH)
+if _CRED_ENV:
+    _cred_dict = json.loads(_CRED_ENV)
+    cred = credentials.Certificate(_cred_dict)
+else:
+    _CRED_PATH = os.path.join(os.path.dirname(__file__), "firebase_credentials.json")
+    cred = credentials.Certificate(_CRED_PATH)
+
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 

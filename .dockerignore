@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+
+# Python
+venv/
+env/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Secrets — never bake into the image
+firebase_credentials.json
+.env
+
+# Output / local data
+*.csv
+*.xlsx
+*.log
+*.db
+result.csv
+keyword_summary.csv
+location_summary.csv
+
+# Dev tooling
+.vscode/
+.DS_Store
+playwright-report/
+test-results/
+
+# Docs
+README.md
+DEPLOY.md
