@@ -118,7 +118,19 @@ def scrape_places(
     places: List[Place] = []
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(
+            headless=True,
+            timeout=120000,  # 2 min launch timeout
+            args=[
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",   # avoids /dev/shm exhaustion in Docker
+                "--disable-gpu",
+                "--no-zygote",
+                "--single-process",          # important for constrained containers
+                "--disable-extensions",
+            ],
+        )
         context = browser.new_context()
         page = context.new_page()
 
