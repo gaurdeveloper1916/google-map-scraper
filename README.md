@@ -1,4 +1,8 @@
+source venv/bin/activate
+uvicorn api:app --host 0.0.0.0 --port 8000
+
 # Google-Maps-Scrapper
+
 This Python script utilizes the Playwright library to perform web scraping and data extraction from Google Maps. It is particularly designed for obtaining information about businesses, including their name, address, website, phone number, reviews, and more.
 
 ## Read Prerequistes

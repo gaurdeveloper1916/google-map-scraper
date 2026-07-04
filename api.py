@@ -122,10 +122,25 @@ def run_scraper(job_id: str, search_for: str, total: int, category_id: str):
             job["status"] = "done"
             return
 
-        # Deduplicate
+        # Deduplicate within current batch (name + phone)
         df = pd.DataFrame([asdict(p) for p in places])
         df.drop_duplicates(subset=["name", "phone_number"], inplace=True)
         records = sanitize(df.to_dict(orient="records"))
+
+        # Build a set of existing (name, phone) pairs from Firestore
+        # to avoid storing duplicates across multiple scrape runs
+        logger.info("Checking for existing records in Firestore…")
+        existing_docs = db.collection("places") \
+            .where("category_id", "==", category_id) \
+            .stream()
+        existing_keys = set()
+        for doc in existing_docs:
+            d = doc.to_dict()
+            name = (d.get("name") or "").strip().lower()
+            phone = (d.get("phone_number") or "").strip()
+            existing_keys.add((name, phone))
+
+        logger.info(f"Found {len(existing_keys)} existing records in Firestore.")
 
         # Save to Firestore:
         #   1. categories/{category_id}/places/{auto_id}  — scoped under category
@@ -134,8 +149,20 @@ def run_scraper(job_id: str, search_for: str, total: int, category_id: str):
         global_places_ref = db.collection("places")
         batch = db.batch()
         saved = 0
+        skipped = 0
 
         for record in records:
+            name_key = (record.get("name") or "").strip().lower()
+            phone_key = (record.get("phone_number") or "").strip()
+
+            if (name_key, phone_key) in existing_keys:
+                skipped += 1
+                logger.info(f"Skipped duplicate: {record.get('name')}")
+                continue
+
+            # Mark as seen so within-batch duplicates are also caught
+            existing_keys.add((name_key, phone_key))
+
             record["scraped_at"] = datetime.now(timezone.utc).isoformat()
             record["search_query"] = search_for
             record["category_id"] = category_id
@@ -162,7 +189,7 @@ def run_scraper(job_id: str, search_for: str, total: int, category_id: str):
             "total_places": firestore.Increment(saved),
         })
 
-        logger.info(f"Saved {saved} places to Firestore under category '{category_id}'")
+        logger.info(f"Saved {saved} new places, skipped {skipped} duplicates (category '{category_id}')")
         job["result"] = records
         job["status"] = "done"
 

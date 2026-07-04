@@ -142,32 +142,47 @@ def scrape_places(
             logger.info(f"Opening {url}")
 
             page.goto(url, timeout=120000)
-            page.wait_for_selector('a[href*="/maps/place"]', timeout=60000)
+            page.wait_for_selector('a[href*="/maps/place"]', timeout=90000)
 
             feed = page.locator('//div[@role="feed"]')
             prev = 0
             same = 0
+            max_same = 10  # allow more stall cycles before giving up
 
             # Scroll until we have enough listings or hit the end
             while True:
-                feed.evaluate("(el) => el.scrollBy(0, 4000)")
-                page.wait_for_timeout(800)
+                # Scroll the feed panel down aggressively
+                feed.evaluate("(el) => el.scrollBy(0, 5000)")
+                page.wait_for_timeout(1200)
 
                 found = page.locator('a[href*="/maps/place"]').count()
-                logger.info(f"Found: {found}")
+                logger.info(f"Scrolling… collected {found}/{total} listings")
 
                 if found >= total:
                     break
+
+                # Detect Google Maps "end of results" message
+                end_text = page.locator("//p[contains(@class,'fontBodyMedium') and contains(., \"You've reached the end\")]")
+                if end_text.count() > 0:
+                    logger.info("Reached end of Google Maps results.")
+                    break
+
                 if found == prev:
                     same += 1
+                    # On stall, try scrolling the page itself too
+                    page.evaluate("window.scrollBy(0, 2000)")
+                    page.wait_for_timeout(800)
                 else:
                     same = 0
-                if same >= 5:
+
+                if same >= max_same:
+                    logger.info(f"No new listings after {max_same} attempts. Stopping scroll.")
                     break
+
                 prev = found
 
             listings = page.locator('a[href*="/maps/place"]').all()[:total]
-            logger.info(f"Total listings: {len(listings)}")
+            logger.info(f"Total listings to process: {len(listings)}")
 
             for i, item in enumerate(listings):
                 try:
